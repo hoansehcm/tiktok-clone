@@ -5,23 +5,30 @@ import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import VideoFeed from '@/components/VideoFeed';
 import UploadModal from '@/components/UploadModal';
-import { AuthProvider } from '@/components/AuthProvider';
+import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, getDocs, addDoc, serverTimestamp, limit, query } from 'firebase/firestore';
 
 function TikTokApp() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  const { user, loading: authLoading } = useAuth();
+
   // Seed initial data if empty
   useEffect(() => {
     const seedData = async () => {
+      if (authLoading || !user) return;
+      
+      // Only the admin should seed the initial data
+      if (user.email !== 'hoangnnse183499@fpt.edu.vn') return;
+
       const q = query(collection(db, 'videos'), limit(1));
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
         const initialVideos = [
           {
-            userId: 'system',
+            userId: user.uid, // Use admin's UID
             authorName: 'tiktok_official',
             authorPhoto: 'https://picsum.photos/seed/tiktok/200/200',
             videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-light-dancing-40030-large.mp4',
@@ -32,7 +39,7 @@ function TikTokApp() {
             createdAt: serverTimestamp(),
           },
           {
-            userId: 'system',
+            userId: user.uid, // Use admin's UID
             authorName: 'nature_vibes',
             authorPhoto: 'https://picsum.photos/seed/nature/200/200',
             videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
@@ -55,7 +62,7 @@ function TikTokApp() {
     };
 
     seedData();
-  }, []);
+  }, [user, authLoading]);
 
   return (
     <div className="min-h-screen bg-white">

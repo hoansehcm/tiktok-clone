@@ -71,7 +71,7 @@ service cloud.firestore {
 
     function isValidVideo(data) {
       return data.keys().hasAll(['userId', 'videoUrl', 'createdAt']) &&
-             data.userId == request.auth.uid &&
+             (data.userId == request.auth.uid || isAdmin()) &&
              data.videoUrl is string && data.videoUrl.matches("^https://.*") &&
              data.createdAt is timestamp &&
              (!('caption' in data) || (data.caption is string && data.caption.size() < 500));
